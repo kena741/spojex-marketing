@@ -9,8 +9,8 @@
           "/gym/*",
           "/shorts",
           "/shorts/*",
-          "/profile/*",
-          "/org/*"
+          "/stadium/*",
+          "/org-chat/*"
         ]
       }
     ]

@@ -1,11 +1,16 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "com.spojex.superapp",
       "sha256_cert_fingerprints": [
-        "REPLACE_WITH_RELEASE_SHA256_COLON_HEX"
+        "94:00:D9:44:18:F2:EA:7B:BD:FE:BF:E9:9A:1F:E3:F5:EC:39:9A:9A:B7:70:56:7F:D9:FE:B0:A6:78:3B:EE:7E",
+        "AE:76:23:1B:47:54:84:37:96:C3:E4:F4:61:C5:72:49:03:F3:FD:C1:7A:B2:55:0E:15:F8:66:F1:84:C4:BE:0C",
+        "24:1C:B2:7E:20:40:16:FB:E3:8D:5A:D3:B7:F6:92:30:A4:A7:7D:96:0B:A0:D2:75:4C:00:08:C0:A2:9B:34:F6",
+        "70:D5:EA:A2:F7:D7:28:B8:71:27:85:D2:49:A9:97:07:76:BF:E4:85:E6:D8:A1:55:9A:25:4C:EF:BE:04:65:A5"
       ]
     }
   }

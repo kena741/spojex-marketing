@@ -1,6 +1,5 @@
 import { cache } from "react";
-import { createClient } from "@supabase/supabase-js";
-import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/env";
+import { getApiBaseUrl } from "@/lib/env";
 import { clip, eventTiming } from "@/lib/format";
 import {
   FALLBACK_COMMUNITY,
@@ -160,15 +159,28 @@ export type Catalog = {
   donations: Donation[];
 };
 
-const SOCIAL_FIELDS: Array<{ key: string; label: string }> = [
-  { key: "social_instagram", label: "Instagram" },
-  { key: "social_facebook", label: "Facebook" },
-  { key: "social_x", label: "X" },
-  { key: "social_tiktok", label: "TikTok" },
-  { key: "social_youtube", label: "YouTube" },
-  { key: "social_telegram", label: "Telegram" },
-  { key: "social_linkedin", label: "LinkedIn" },
-];
+const LIVE_STATUSES = new Set(["scheduled", "live", "finished"]);
+
+/** Public Play listing. The API has no store-url field yet. */
+const PLAY_STORE_URL =
+  "https://play.google.com/store/apps/details?id=com.spojex.superapp";
+
+type AppInfo = {
+  app?: { name?: string; latest_version?: string };
+  support?: {
+    email?: string;
+    phone?: string;
+    url?: string;
+    address?: string;
+    email_subject?: string;
+  };
+  legal?: {
+    terms?: string;
+    privacy?: string;
+    community_guidelines?: string;
+    about?: string;
+  };
+};
 
 function text(value: unknown) {
   return `${value ?? ""}`.trim();
@@ -353,23 +365,6 @@ function mapDonation(row: Row): Donation | null {
   };
 }
 
-function asObject(value: unknown): Row {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-  return value as Row;
-}
-
-function pick(source: Row, keys: string[]) {
-  const next: Row = {};
-  for (const key of keys) {
-    if (key in source) next[key] = source[key];
-  }
-  return next;
-}
-
-function settingValue(map: Map<string, string>, key: string) {
-  return (map.get(key) || "").trim();
-}
-
 function keywordsFrom(value: string) {
   return value
     .split(",")
@@ -378,269 +373,111 @@ function keywordsFrom(value: string) {
     .slice(0, 16);
 }
 
-function buildSite(
-  settingsRows: Array<{ id: string; data: unknown }>,
-  marketingRows: Array<{ key: string; value: string | null }>,
-  degraded: boolean,
-): PublicSite {
-  const byId = new Map(settingsRows.map((row) => [row.id, asObject(row.data)]));
-  const settings = pick(byId.get("settings") ?? {}, [
-    "appName",
-    "appColor",
-    "appVersion",
-    "aboutApp",
-    "aboutAppSpojex",
-    "supportURL",
-    "phoneNumber",
-    "supportEmail",
-  ]);
-  const policy = pick(byId.get("policy") ?? {}, [
-    "privacyPolicy",
-    "termsAndConditions",
-    "aboutApp",
-    "aboutAppSpojex",
-    "cookiePolicy",
-    "communityGuidelines",
-    "refundPolicy",
-  ]);
-  const contact = pick(byId.get("contact_us") ?? {}, [
-    "email",
-    "phoneNumber",
-    "address",
-    "emailSubject",
-  ]);
-  const marketing = new Map(
-    marketingRows.map((row) => [text(row.key), text(row.value)]),
-  );
-
-  const appName = text(settings.appName) || "Spojex";
-  const about =
-    policyToPlain(text(policy.aboutApp) || text(policy.aboutAppSpojex)) ||
-    policyToPlain(text(settings.aboutApp) || text(settings.aboutAppSpojex)) ||
-    policyToPlain(settingValue(marketing, "company_description"));
-
-  const privacy =
-    text(policy.privacyPolicy) ||
-    text(settings.privacyPolicy) ||
-    settingValue(marketing, "privacy_policy") ||
-    FALLBACK_PRIVACY;
-  const terms =
-    text(policy.termsAndConditions) ||
-    text(settings.termsAndConditions) ||
-    settingValue(marketing, "terms") ||
-    FALLBACK_TERMS;
-
-  const socials = SOCIAL_FIELDS.flatMap((field) => {
-    const href = safeHttpsUrl(settingValue(marketing, field.key));
-    return href ? [{ id: field.key, label: field.label, href }] : [];
-  });
-
-  const headline =
-    settingValue(marketing, "hero_headline") || FALLBACK_HERO.headline;
-  const description =
-    settingValue(marketing, "hero_description") ||
-    clip(about, 220) ||
-    FALLBACK_HERO.description;
+function buildSite(info: AppInfo, degraded: boolean): PublicSite {
+  const app = info.app ?? {};
+  const support = info.support ?? {};
+  const legal = info.legal ?? {};
+  const appName = text(app.name) || "Spojex";
+  const about = policyToPlain(text(legal.about));
+  const privacy = text(legal.privacy) || FALLBACK_PRIVACY;
+  const terms = text(legal.terms) || FALLBACK_TERMS;
+  const headline = FALLBACK_HERO.headline;
+  const description = clip(about, 220) || FALLBACK_HERO.description;
 
   return {
     appName,
-    appColor: /^#[0-9a-fA-F]{6}$/.test(text(settings.appColor))
-      ? text(settings.appColor)
-      : "#0A2463",
-    version: text(settings.appVersion),
+    appColor: "#0A2463",
+    version: text(app.latest_version),
     eyebrow: FALLBACK_HERO.eyebrow,
     headline,
     description,
     about,
     companyDescription:
-      settingValue(marketing, "company_description") ||
       clip(about, 180) ||
       "Spojex brings sports services, opportunities, events, and community content into one super app for Ethiopia.",
-    seoTitle:
-      settingValue(marketing, "seo_title") ||
-      `${appName} — ${headline}`,
-    seoDescription:
-      settingValue(marketing, "seo_description") || clip(description, 180),
+    seoTitle: `${appName} — ${headline}`,
+    seoDescription: clip(description, 180),
     keywords: keywordsFrom(
-      settingValue(marketing, "seo_keywords") ||
-        "Spojex, sports super app, Ethiopian football, events, opportunities",
+      "Spojex, sports super app, Ethiopian football, events, opportunities",
     ),
-    email: text(contact.email) || text(settings.supportEmail) || null,
-    phone: text(contact.phoneNumber) || text(settings.phoneNumber) || null,
-    address: text(contact.address) || null,
-    emailSubject: text(contact.emailSubject) || `${appName} support`,
-    supportUrl: safeHttpsUrl(settings.supportURL),
-    appStoreUrl: safeHttpsUrl(settingValue(marketing, "app_store_url")),
-    playStoreUrl: safeHttpsUrl(settingValue(marketing, "play_store_url")),
-    logoUrl: safeHttpsUrl(settingValue(marketing, "logo_url")),
-    socials,
+    email: text(support.email) || null,
+    phone: text(support.phone) || null,
+    address: text(support.address) || null,
+    emailSubject: text(support.email_subject) || `${appName} support`,
+    supportUrl: safeHttpsUrl(support.url),
+    appStoreUrl: null,
+    playStoreUrl: PLAY_STORE_URL,
+    logoUrl: null,
+    socials: [],
     privacyPolicy: privacy,
     terms,
-    cookiePolicy:
-      text(policy.cookiePolicy) ||
-      settingValue(marketing, "cookie_policy") ||
-      FALLBACK_COOKIE,
-    communityGuidelines:
-      text(policy.communityGuidelines) ||
-      settingValue(marketing, "community_guidelines") ||
-      FALLBACK_COMMUNITY,
-    refundPolicy:
-      text(policy.refundPolicy) ||
-      settingValue(marketing, "refund_policy") ||
-      FALLBACK_REFUND,
+    cookiePolicy: FALLBACK_COOKIE,
+    communityGuidelines: text(legal.community_guidelines) || FALLBACK_COMMUNITY,
+    refundPolicy: FALLBACK_REFUND,
     degraded,
   };
 }
 
-function emptySite(degraded: boolean): PublicSite {
-  return buildSite([], [], degraded);
+async function apiGet(path: string): Promise<{ data: unknown; failed: boolean }> {
+  try {
+    const response = await fetch(`${getApiBaseUrl()}${path}`, {
+      headers: { accept: "application/json" },
+      next: { revalidate: 60 },
+    });
+    if (!response.ok) return { data: null, failed: true };
+    return { data: await response.json(), failed: false };
+  } catch {
+    return { data: null, failed: true };
+  }
 }
 
-async function rowsOf(
-  run: () => PromiseLike<{ data: unknown; error: { message: string } | null }>,
-) {
-  try {
-    const { data, error } = await run();
-    if (error) return { rows: [] as Row[], failed: true };
-    return {
-      rows: (Array.isArray(data) ? data : []) as Row[],
-      failed: false,
-    };
-  } catch {
-    return { rows: [] as Row[], failed: true };
-  }
+function asRows(data: unknown) {
+  return (Array.isArray(data) ? data : []) as Row[];
+}
+
+function asAppInfo(data: unknown): AppInfo {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return {};
+  return data as AppInfo;
 }
 
 async function loadCatalog(): Promise<Catalog> {
-  const url = getSupabaseUrl();
-  const key = getSupabasePublishableKey();
-  if (!url || !key) {
-    return {
-      site: emptySite(true),
-      miniApps: [],
-      events: [],
-      news: [],
-      radio: [],
-      live: [],
-      opportunities: [],
-      donations: [],
-    };
-  }
+  const [mini, events, news, radio, live, opportunities, donations, info] =
+    await Promise.all([
+      apiGet("/api/v1/marketplace/mini_apps?published=true&limit=40&order=sort_order.asc"),
+      apiGet("/api/v1/events/events?status=active&limit=12&order=starts_at.desc"),
+      apiGet("/api/v1/marketplace/sport_news?status=active&limit=12&order=published_at.desc"),
+      apiGet("/api/v1/streaming/radio_streams?status=active&limit=8&order=sort_order.asc"),
+      apiGet("/api/v1/streaming/live_events?limit=12&order=starts_at.desc"),
+      apiGet("/api/v1/marketplace/opportunities?is_published=true&limit=12&order=created_at.desc"),
+      apiGet("/api/v1/donations/donation_campaigns?status=active&limit=4"),
+      apiGet("/api/v1/platform/app-info"),
+    ]);
 
-  const client = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: {
-      fetch: (input, init) =>
-        fetch(input, { ...init, next: { revalidate: 60 } }),
-    },
-  });
-
-  const [
-    mini,
-    events,
-    news,
-    radio,
-    live,
-    opportunities,
-    donations,
-    settings,
-    marketing,
-  ] = await Promise.all([
-    rowsOf(() =>
-      client
-        .from("mini_apps")
-        .select("*")
-        .eq("published", true)
-        .order("sort_order")
-        .order("name")
-        .limit(40),
-    ),
-    rowsOf(() =>
-      client
-        .from("events")
-        .select(
-          "id,name,slug,venue_name,location,starts_at,ends_at,ticket_price,currency,image_url,photos,description,status",
-        )
-        .eq("status", "active")
-        .order("starts_at", { ascending: false })
-        .limit(12),
-    ),
-    rowsOf(() =>
-      client
-        .from("sport_news")
-        .select(
-          "id,title,slug,summary,body,category,source,image_url,cover_url,is_featured,published_at,status",
-        )
-        .eq("status", "active")
-        .order("published_at", { ascending: false, nullsFirst: false })
-        .limit(12),
-    ),
-    rowsOf(() =>
-      client
-        .from("radio_streams")
-        .select(
-          "id,name,tagline,genre,city,image_url,website_url,status,is_featured,sort_order",
-        )
-        .eq("status", "active")
-        .order("is_featured", { ascending: false })
-        .order("sort_order")
-        .limit(8),
-    ),
-    rowsOf(() =>
-      client
-        .from("live_events")
-        .select(
-          "id,kind,name,starts_at,status,description,home_name,away_name,home_score,away_score,thumbnail_url",
-        )
-        .in("status", ["scheduled", "live", "finished"])
-        .order("starts_at", { ascending: false })
-        .limit(6),
-    ),
-    rowsOf(() =>
-      client
-        .from("opportunities")
-        .select(
-          "id,title,description,category,organizer,location,country,cover_image_url,status,is_published,fee_type,fee_amount,application_deadline,start_date,external_link,eligibility_requirements,required_documents,additional_terms,eligible_roles",
-        )
-        .eq("is_published", true)
-        .order("created_at", { ascending: false })
-        .limit(12),
-    ),
-    rowsOf(() =>
-      client
-        .from("donation_campaigns")
-        .select("id,title,summary,image_url,cover_url,goal_amount,currency,status")
-        .eq("status", "active")
-        .limit(4),
-    ),
-    rowsOf(() =>
-      client.from("app_settings").select("id,data").in("id", ["settings", "policy", "contact_us"]),
-    ),
-    rowsOf(() =>
-      client.from("marketing_settings").select("key,value").eq("is_public", true).limit(80),
-    ),
-  ]);
-
-  const degraded = [mini, events, news, settings].some((result) => result.failed);
+  const degraded = [mini, events, news, info].some((result) => result.failed);
 
   return {
-    site: buildSite(
-      settings.rows as Array<{ id: string; data: unknown }>,
-      marketing.rows as Array<{ key: string; value: string | null }>,
-      degraded,
-    ),
-    miniApps: mini.rows
+    site: buildSite(asAppInfo(info.data), degraded),
+    miniApps: asRows(mini.data)
       .map(mapMiniApp)
       .filter((item): item is MiniApp => Boolean(item))
       .filter((item) => item.slug !== "zemen-service" && item.name.toLowerCase() !== "zemen service"),
-    events: events.rows.map(mapEvent).filter((item): item is SportEvent => Boolean(item)),
-    news: news.rows.map(mapNews).filter((item): item is NewsArticle => Boolean(item)),
-    radio: radio.rows.map(mapRadio).filter((item): item is RadioStation => Boolean(item)),
-    live: live.rows.map(mapLive).filter((item): item is LiveMatch => Boolean(item)),
-    opportunities: opportunities.rows
+    events: asRows(events.data)
+      .map(mapEvent)
+      .filter((item): item is SportEvent => Boolean(item)),
+    news: asRows(news.data)
+      .map(mapNews)
+      .filter((item): item is NewsArticle => Boolean(item)),
+    radio: asRows(radio.data)
+      .map(mapRadio)
+      .filter((item): item is RadioStation => Boolean(item)),
+    live: asRows(live.data)
+      .map(mapLive)
+      .filter((item): item is LiveMatch => Boolean(item))
+      .filter((item) => LIVE_STATUSES.has(item.status)),
+    opportunities: asRows(opportunities.data)
       .map(mapOpportunity)
       .filter((item): item is Opportunity => Boolean(item)),
-    donations: donations.rows
+    donations: asRows(donations.data)
       .map(mapDonation)
       .filter((item): item is Donation => Boolean(item)),
   };

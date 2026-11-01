@@ -4,8 +4,8 @@ import Image from "next/image";
 import { useState } from "react";
 
 const OPTIMIZED_HOSTS = new Set([
-  "xfwgeoqlsutzelhccwyx.supabase.co",
   "images.unsplash.com",
+  "storage.googleapis.com",
 ]);
 
 export function MediaImage({

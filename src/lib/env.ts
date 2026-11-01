@@ -2,21 +2,16 @@ function read(name: string) {
   return (process.env[name] || "").trim();
 }
 
-/** Server-only Supabase URL. Accepts the Admin env name as a fallback. */
-export function getSupabaseUrl() {
-  return (
-    read("SUPABASE_URL") || read("NEXT_PUBLIC_SUPABASE_URL")
-  ).replace(/\/$/, "");
-}
+/** Spojex API on Cloud Run. Same default the super app and admin use. */
+export const DEFAULT_API_BASE_URL =
+  "https://spojex-backend-prod-576757759417.europe-west3.run.app";
 
-/** Anon / publishable key. Never the service-role key. */
-export function getSupabasePublishableKey() {
+export function getApiBaseUrl() {
   return (
-    read("SUPABASE_PUBLISHABLE_KEY") ||
-    read("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY") ||
-    read("NEXT_PUBLIC_SUPABASE_ANON_KEY") ||
-    read("SUPABASE_ANON_KEY")
-  );
+    read("SPOJEX_API_BASE_URL") ||
+    read("NEXT_PUBLIC_SPOJEX_API_BASE_URL") ||
+    DEFAULT_API_BASE_URL
+  ).replace(/\/$/, "");
 }
 
 export function getSiteUrl() {
