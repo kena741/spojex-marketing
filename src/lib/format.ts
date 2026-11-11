@@ -32,6 +32,14 @@ export function eventTiming(startsAt: string) {
   return start.getTime() > today.getTime() ? ("upcoming" as const) : ("past" as const);
 }
 
+/** Dial link for an Ethiopian local number (0983…) or an already international one. */
+export function phoneTel(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("0")) return `tel:+251${digits.slice(1)}`;
+  if (digits.startsWith("251")) return `tel:+${digits}`;
+  return `tel:${digits}`;
+}
+
 export function formatMoney(amount: number, currency: string) {
   if (!amount) return "Free";
   const code = currency || "ETB";

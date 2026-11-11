@@ -165,6 +165,11 @@ const LIVE_STATUSES = new Set(["scheduled", "live", "finished"]);
 const PLAY_STORE_URL =
   "https://play.google.com/store/apps/details?id=com.spojex.superapp";
 
+/** Shown when global settings have not published a support phone yet. */
+const CONTACT_PHONE = "0983 775 555";
+
+const CONTACT_EMAIL = "support@spojex.com";
+
 type AppInfo = {
   app?: { name?: string; latest_version?: string };
   support?: {
@@ -400,8 +405,8 @@ function buildSite(info: AppInfo, degraded: boolean): PublicSite {
     keywords: keywordsFrom(
       "Spojex, sports super app, Ethiopian football, events, opportunities",
     ),
-    email: text(support.email) || null,
-    phone: text(support.phone) || null,
+    email: CONTACT_EMAIL,
+    phone: text(support.phone) || CONTACT_PHONE,
     address: text(support.address) || null,
     emailSubject: text(support.email_subject) || `${appName} support`,
     supportUrl: safeHttpsUrl(support.url),

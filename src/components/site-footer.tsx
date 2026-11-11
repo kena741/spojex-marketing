@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { PublicSite } from "@/lib/catalog";
+import { phoneTel } from "@/lib/format";
 
 const EXPLORE = [
   { href: "/", label: "Home" },
@@ -50,7 +51,13 @@ export function SiteFooter({ site }: { site: PublicSite }) {
                 </a>
               </p>
             ) : null}
-            {site.phone ? <p>{site.phone}</p> : null}
+            {site.phone ? (
+              <p>
+                <a className="hover:text-gold" href={phoneTel(site.phone)}>
+                  {site.phone}
+                </a>
+              </p>
+            ) : null}
           </div>
         </div>
         <div>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ContactForm } from "@/components/contact-form";
 import { PageHero } from "@/components/page-hero";
 import { getCatalog } from "@/lib/catalog";
+import { phoneTel } from "@/lib/format";
 import { pageMetadata } from "@/lib/seo";
 
 export const revalidate = 300;
@@ -31,7 +32,13 @@ export default async function ContactPage() {
           ) : (
             <p className="text-muted">A public contact email has not been published yet.</p>
           )}
-          {site.phone ? <p>{site.phone}</p> : null}
+          {site.phone ? (
+            <p>
+              <a className="font-semibold text-pitch" href={phoneTel(site.phone)}>
+                {site.phone}
+              </a>
+            </p>
+          ) : null}
           {site.supportUrl ? (
             <p>
               <a href={site.supportUrl} className="font-semibold text-pitch" target="_blank" rel="noopener noreferrer">
