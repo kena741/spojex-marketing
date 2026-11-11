@@ -2,7 +2,7 @@ import type { PublicSite } from "@/lib/catalog";
 
 function AppleMark() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden>
+      <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
       <path
         fill="currentColor"
         d="M16.4 12.6c0-2.2 1.8-3.3 1.9-3.4-1-1.5-2.6-1.7-3.2-1.7-1.3-.1-2.6.8-3.3.8s-1.7-.8-2.8-.7c-1.5.1-2.8.9-3.6 2.2-1.5 2.7-.4 6.6 1.1 8.8.7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7s1.7.7 2.8.7 1.9-1.1 2.6-2.2c.8-1.2 1.1-2.3 1.2-2.4-.1 0-2.2-.8-2.2-3.6zM14.7 6.2c.6-.7 1-1.7.9-2.7-.9 0-1.9.6-2.5 1.3-.6.6-1.1 1.7-.9 2.6 1 .1 1.9-.5 2.5-1.2z"
@@ -13,7 +13,7 @@ function AppleMark() {
 
 function PlayMark() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden>
+      <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
       <path fill="#34a853" d="M3.5 20.5 14.2 12 3.5 3.5v17z" />
       <path fill="#fbbc04" d="M14.2 12 17.5 9.4 5.2 2.2 14.2 12z" />
       <path fill="#ea4335" d="M3.5 20.5 14.2 12l3.3 2.6L5.2 21.8 3.5 20.5z" />
@@ -36,21 +36,20 @@ export function StoreButtons({
     tone === "light"
       ? "bg-white text-pitch-ink hover:bg-gold"
       : "bg-pitch-ink text-white hover:bg-pitch";
+  const badge =
+    "inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-3.5 text-sm font-semibold";
   return (
-    <div className={`flex flex-wrap gap-3 ${className}`}>
+    <div className={`flex flex-wrap items-center gap-2.5 ${className}`}>
       {site.appStoreUrl ? (
         <a
           href={site.appStoreUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className={`inline-flex min-h-12 items-center gap-3 rounded-full px-4 pr-5 text-left ${button}`}
+          aria-label={`Download ${site.appName} on the App Store`}
+          className={`${badge} ${button}`}
         >
           <AppleMark />
-          <span>
-            <span className="block text-[10px] uppercase tracking-[0.16em]">Download on the</span>
-            <span className="font-display block text-lg leading-none font-semibold">App Store</span>
-          </span>
-          <span className="sr-only"> for {site.appName}</span>
+          App Store
         </a>
       ) : null}
       {site.playStoreUrl ? (
@@ -58,13 +57,11 @@ export function StoreButtons({
           href={site.playStoreUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className={`inline-flex min-h-12 items-center gap-3 rounded-full px-4 pr-5 text-left ${button}`}
+          aria-label={`Get ${site.appName} on Google Play`}
+          className={`${badge} ${button}`}
         >
           <PlayMark />
-          <span>
-            <span className="block text-[10px] uppercase tracking-[0.16em]">Get it on</span>
-            <span className="font-display block text-lg leading-none font-semibold">Google Play</span>
-          </span>
+          Google Play
         </a>
       ) : null}
     </div>

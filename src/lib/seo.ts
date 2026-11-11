@@ -32,6 +32,10 @@ export async function pageMetadata({
     keywords: keywords?.length ? keywords : site.keywords,
     alternates: { canonical },
     robots: { index: true, follow: true },
+    icons: {
+      icon: [{ url: "/brand/sj-mark.png", type: "image/png" }],
+      apple: [{ url: "/brand/sj-mark.png" }],
+    },
     openGraph: {
       type: "website",
       url: canonical,

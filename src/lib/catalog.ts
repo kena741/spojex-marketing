@@ -161,7 +161,8 @@ export type Catalog = {
 
 const LIVE_STATUSES = new Set(["scheduled", "live", "finished"]);
 
-/** Public Play listing. The API has no store-url field yet. */
+/** Public store listings. The API has no store-url field yet. */
+const APP_STORE_URL = "https://apps.apple.com/in/app/spojex/id6817657130";
 const PLAY_STORE_URL =
   "https://play.google.com/store/apps/details?id=com.spojex.superapp";
 
@@ -410,7 +411,7 @@ function buildSite(info: AppInfo, degraded: boolean): PublicSite {
     address: text(support.address) || null,
     emailSubject: text(support.email_subject) || `${appName} support`,
     supportUrl: safeHttpsUrl(support.url),
-    appStoreUrl: null,
+    appStoreUrl: APP_STORE_URL,
     playStoreUrl: PLAY_STORE_URL,
     logoUrl: null,
     socials: [],

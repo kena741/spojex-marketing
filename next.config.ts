@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [{ source: "/favicon.ico", destination: "/brand/sj-mark.png" }];
+  },
   async headers() {
     return [
       {

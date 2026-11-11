@@ -35,6 +35,7 @@ export function SiteHeader({ site }: { site: HeaderSite }) {
             {site.appName}
           </span>
         </Link>
+        <div className="flex items-center gap-5">
         <nav className="hidden items-center gap-5 text-sm font-medium text-white/80 lg:flex">
           {LINKS.map((link) => (
             <Link key={link.href} href={link.href} className="hover:text-gold">
@@ -42,13 +43,6 @@ export function SiteHeader({ site }: { site: HeaderSite }) {
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/#download"
-            className="hidden rounded-full bg-gold px-4 py-2 text-sm font-semibold text-pitch-ink sm:inline-flex"
-          >
-            Download App
-          </Link>
           <button
             type="button"
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 lg:hidden"
@@ -77,12 +71,6 @@ export function SiteHeader({ site }: { site: HeaderSite }) {
                 {link.label}
               </Link>
             ))}
-            <Link
-              href="/#download"
-              className="mt-2 rounded-full bg-gold px-4 py-3 text-center font-semibold text-pitch-ink"
-            >
-              Download App
-            </Link>
           </div>
         </nav>
       ) : null}
