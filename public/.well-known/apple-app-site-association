@@ -10,7 +10,8 @@
           "/shorts",
           "/shorts/*",
           "/stadium/*",
-          "/org-chat/*"
+          "/org-chat/*",
+          "/vote/*"
         ]
       }
     ]
