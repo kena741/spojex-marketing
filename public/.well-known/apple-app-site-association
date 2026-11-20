@@ -11,7 +11,8 @@
           "/shorts/*",
           "/stadium/*",
           "/org-chat/*",
-          "/vote/*"
+          "/vote/*",
+          "/market/*"
         ]
       }
     ]
